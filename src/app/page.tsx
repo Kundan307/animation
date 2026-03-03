@@ -13,26 +13,20 @@ export default function Home() {
   const x = useSpring(0, { stiffness: 100, damping: 20, mass: 0.2 });
   const [maxScroll, setMaxScroll] = useState(0);
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  // We are trimming the scroll length to stop before the image truly ends.
-  // 0.85 means it will hit a hard stop at 85% of the image's full width.
-  const SCROLL_TRIM_RATIO = 0.85;
 
   useEffect(() => {
-    // Wait until the image has loaded and provided its aspect ratio
+    // Wait until the SVG has loaded and provided its aspect ratio
     if (!aspectRatio) return;
 
     const calculateMaxScroll = () => {
-      // The image is strictly bounded by height (object-contain to 100vh).
+      // The SVG is strictly bounded by height (object-contain to 100vh).
       // So its true physical width on screen is the window height * natural aspect ratio.
       const screenHeight = window.innerHeight;
       const screenWidth = window.innerWidth;
 
-      // We calculate the full massive width of the image, but then trim it by our ratio to artificially end the scroll early
-      const absoluteImageWidth = screenHeight * aspectRatio * SCROLL_TRIM_RATIO;
+      const absoluteImageWidth = screenHeight * aspectRatio;
 
-      // The maximum we can scroll left is the total trimmed track width minus the screen we are already looking at.
+      // The maximum we can scroll left is the total image width minus the one screen width we are already looking at.
       setMaxScroll(Math.max(0, absoluteImageWidth - screenWidth));
     };
 
@@ -86,38 +80,26 @@ export default function Home() {
       <motion.div
         style={{
           x,
-          // Dynamically set the physical width of the track to exactly match the TRIMMED image bounding box
-          // This creates a physical wall for Lenis to hit early.
-          width: aspectRatio ? `calc(100vh * ${aspectRatio} * ${SCROLL_TRIM_RATIO})` : '100vw'
+          // Dynamically set the physical width of the track to exactly match the image's bounding box
+          width: aspectRatio ? `calc(100vh * ${aspectRatio})` : '200vw'
         }}
-        className={`scroll-content flex h-screen will-change-transform relative transition-opacity duration-[1500ms] ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className="scroll-content flex h-screen will-change-transform relative"
       >
-
-        {/* 
-            The Continuous Long Illustration.
-            We force the inner container to strictly be the FULL 100% width so the image doesn't squish.
-            It simply overflows the trimmed track, meaning the user just can't physically reach the end of it.
-        */}
-        <div
-          className="absolute top-0 left-0 h-full pointer-events-none"
-          style={{ width: aspectRatio ? `calc(100vh * ${aspectRatio})` : '100vw' }}
-        >
+        {/* Combined Slide */}
+        <div className="absolute inset-0 h-full w-full pointer-events-none">
           <Image
-            src="/illustration_2 final FINAL FINAL 3 copy_page-0001.jpg"
-            alt="The Manufacturing Journey"
+            src="/slide1and2.svg"
+            alt="Combined Slide 1 and 2"
             fill
-            className="object-contain object-left mix-blend-normal opacity-100"
+            className="object-contain object-left mix-blend-multiply opacity-100"
             priority
-            quality={100}
             unoptimized
-            onLoadingComplete={(e) => {
-              const { naturalWidth, naturalHeight } = e as HTMLImageElement;
+            onLoad={(e) => {
+              const { naturalWidth, naturalHeight } = e.currentTarget as HTMLImageElement;
               setAspectRatio(naturalWidth / naturalHeight);
-              setIsLoaded(true);
             }}
           />
         </div>
-
       </motion.div>
     </main>
   );
