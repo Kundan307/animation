@@ -1,9 +1,5 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import "./lenis.css";
 
 @theme inline {
   --color-background: var(--background);
@@ -12,15 +8,38 @@
   --font-mono: var(--font-geist-mono);
 }
 
+:root {
+  --background: #E4DACE;
+  --foreground: #171717;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #E4DACE;
+    --foreground: #171717;
   }
 }
 
+html,
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  /* Hide Native scrollbars globally, Lenis handles the virtual scroll */
 }
+
+/* Hide scrollbar for Firefox and IE */
+/* These are no longer needed as overflow: hidden; handles it */
+/* scrollbar-width: none; */
+/* -ms-overflow-style: none; */
+
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+/* These are no longer needed as overflow: hidden; handles it */
+/* html::-webkit-scrollbar, */
+/* body::-webkit-scrollbar { */
+/*   display: none; */
+/* } */
