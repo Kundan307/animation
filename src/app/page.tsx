@@ -9,7 +9,6 @@ import { useGSAP } from "@gsap/react";
 import Truck from "@/components/Truck";
 import Wood from "@/components/Wood";
 import LeftPicker from "@/components/LeftPicker";
-import RightPicker from "@/components/RightPicker";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -19,7 +18,6 @@ export default function Home() {
   const truckRef = useRef<HTMLDivElement>(null);
   const woodRef = useRef<HTMLDivElement>(null);
   const leftPickerRef = useRef<HTMLDivElement>(null);
-  const rightPickerRef = useRef<HTMLDivElement>(null);
 
   // final-sketch.svg natural dimensions: viewBox="0 0 2240.09 601.49"
   const baseAspect = 2240.09 / 601.49;
@@ -80,7 +78,7 @@ export default function Home() {
   }, []);
 
   useGSAP(() => {
-    if (!trackRef.current || !containerRef.current || !truckRef.current || !woodRef.current || !leftPickerRef.current || !rightPickerRef.current) return;
+    if (!trackRef.current || !containerRef.current || !truckRef.current || !woodRef.current || !leftPickerRef.current) return;
 
     const trackWidth = trackRef.current.scrollWidth;
     const scrollDistance = trackWidth - window.innerWidth;
@@ -95,9 +93,9 @@ export default function Home() {
     const pickerEmptyBelowScreen = 65 * (601.49 / 1161.62) * (68.07 / 601.49) * (window.innerWidth / 100);
     const pickerLiftY = -(truckEmptyBelowScreen - pickerEmptyBelowScreen);
 
-    // Initial setup: Everything visible (so we can see them), but positioned offscreen later
-    gsap.set([truckRef.current, woodRef.current, leftPickerRef.current, rightPickerRef.current], { autoAlpha: 1 });
-    gsap.set([leftPickerRef.current, rightPickerRef.current], { y: pickerLiftY });
+    // Initial setup
+    gsap.set([truckRef.current, woodRef.current, leftPickerRef.current], { autoAlpha: 1 });
+    gsap.set(leftPickerRef.current, { y: pickerLiftY });
 
     const tl = gsap.timeline();
 
@@ -132,49 +130,55 @@ export default function Home() {
       duration: DUR_DRIVE
     }, S_TRUCK_START);
 
-    const truckWheels = truckRef.current.querySelectorAll('.wheel');
-    truckWheels.forEach((wheel) => {
-      tl.fromTo(wheel, { "--wheel-rot": "0deg" }, {
+    tl.fromTo(gsap.utils.toArray('.wheel', truckRef.current),
+      { "--wheel-rot": "0deg" },
+      {
         "--wheel-rot": "-1152deg", // 1.6W distance -> 1.6 * 720
         ease: "power2.out",
         duration: DUR_DRIVE
-      }, S_TRUCK_START);
-    });
+      },
+      S_TRUCK_START
+    );
 
-    // Wood sits inside the Truck, travels exactly with it
-    tl.fromTo(woodRef.current, { x: TRUCK_START_X }, {
+    // Wood travels with the truck initially (inside truck bed)
+    gsap.set(woodRef.current, { x: TRUCK_START_X, y: 0, rotation: 0 });
+    tl.to(woodRef.current, {
       x: TRUCK_STOP_X,
       ease: "power2.out",
       duration: DUR_DRIVE
     }, S_TRUCK_START);
 
-    // 2. Wood unloads onto the tailgate
-    const DUR_UNLOAD = W * 0.6;
-    const S_UNLOAD_START = S_TRUCK_START + DUR_DRIVE + W * 0.1; // brief pause after parking
-    const WOOD_SLIDE_X = TRUCK_STOP_X + W * 0.35; // Slides to tailgate
+    // ==========================================
+    // PHASE 2: WOOD UNLOAD
+    // ==========================================
+    const DUR_UNLOAD = W * 0.7;
+    const S_UNLOAD_START = S_TRUCK_START + DUR_DRIVE + W * 0.2;
+    const WOOD_SLIDE_X = TRUCK_STOP_X + W * 0.28;
 
+    // Phase 2a: wood slides diagonally out of truck bed at -14°
     tl.to(woodRef.current, {
       x: WOOD_SLIDE_X,
+      rotation: -14,
+      transformOrigin: "left center",
       ease: "power1.inOut",
-      duration: DUR_UNLOAD
+      duration: DUR_UNLOAD * 0.55
     }, S_UNLOAD_START);
 
-    // Calculate exact Y drop from truck bed to matched picker
-    const truckBedHeight = 318.49 * 0.85 * (W / 1161.62);
-    const pickerForkHeight = 221.49 * 0.65 * (W / 1161.62) + Math.abs(pickerLiftY);
-    const dropY = truckBedHeight - pickerForkHeight;
+    // Phase 2b: wood levels out and drops slightly
+    tl.to(woodRef.current, {
+      rotation: 0,
+      y: W * 0.05,
+      ease: "power2.out",
+      duration: DUR_UNLOAD * 0.45
+    }, S_UNLOAD_START + DUR_UNLOAD * 0.55);
 
-    tl.fromTo(woodRef.current, { y: 0 }, {
-      y: dropY,
-      ease: "bounce.out",
-      duration: DUR_UNLOAD * 0.4
-    }, S_UNLOAD_START + DUR_UNLOAD * 0.6);
-
-    // 3. Left Picker drives in from right to catch the wood
-    const DUR_LEFT_DRIVE = W * 0.8;
-    const S_LEFT_START = S_UNLOAD_START + DUR_UNLOAD * 0.5;
-    const LEFT_PICKER_CATCH_X = WOOD_SLIDE_X + W * 0.35; // Increased gap to prevent overlap with truck back
-    const LEFT_PICKER_START_X = LEFT_PICKER_CATCH_X + W * 1.0;
+    // ==========================================
+    // Left Picker drives in
+    // ==========================================
+    const DUR_LEFT_DRIVE = W * 0.85;
+    const S_LEFT_START = S_UNLOAD_START + DUR_UNLOAD * 0.3;
+    const LEFT_PICKER_CATCH_X = WOOD_SLIDE_X + W * 0.55; // good gap from truck
+    const LEFT_PICKER_START_X = LEFT_PICKER_CATCH_X + W * 1.2;
 
     tl.fromTo(leftPickerRef.current, { x: LEFT_PICKER_START_X }, {
       x: LEFT_PICKER_CATCH_X,
@@ -182,87 +186,68 @@ export default function Home() {
       duration: DUR_LEFT_DRIVE
     }, S_LEFT_START);
 
-    const leftWheels = leftPickerRef.current.querySelectorAll('.wheel');
-    leftWheels.forEach((wheel) => {
-      tl.fromTo(wheel, { "--wheel-rot": "0deg" }, {
-        "--wheel-rot": "-720deg", // 1.0W distance
-        ease: "power2.out",
-        duration: DUR_LEFT_DRIVE
-      }, S_LEFT_START);
-    });
+    tl.fromTo(gsap.utils.toArray('.wheel', leftPickerRef.current),
+      { "--wheel-rot": "0deg" },
+      { "--wheel-rot": "-720deg", ease: "power2.out", duration: DUR_LEFT_DRIVE },
+      S_LEFT_START
+    );
 
     // ==========================================
-    // PHASE 3: RESUME PANNING
+    // PHASE 3: 3D FLIP (picker turns to face right)
     // ==========================================
-    const S_SEQ_END = S_LEFT_START + DUR_LEFT_DRIVE;
-    const REMAINING_SCROLL = scrollDistance - S_WRAPPER_ALIGNED_LEFT;
-
-    // Background resumes scrolling smoothly
-    tl.to(trackRef.current, {
-      x: -scrollDistance,
-      ease: "none",
-      duration: REMAINING_SCROLL
-    }, S_SEQ_END);
-
-    // 4. Left Picker + Wood drive forward (right relative to wrapper)
-    const DUR_MOVE_RIGHT = W * 1.2;
-    const S_MOVE_RIGHT = S_SEQ_END;
-    const RIGHT_PICKER_STATIC_X = W * 0.9; // Right picker sits further down the road waiting on screen!
-    const LEFT_PICKER_HANDOFF_X = RIGHT_PICKER_STATIC_X - W * 0.45; // Pulls up to Right Picker
-    const WOOD_HANDOFF_X = WOOD_SLIDE_X + (LEFT_PICKER_HANDOFF_X - LEFT_PICKER_CATCH_X);
+    const S_FLIP_START = S_LEFT_START + DUR_LEFT_DRIVE + W * 0.1;
+    const DUR_FLIP = W * 0.35;
 
     tl.to(leftPickerRef.current, {
-      x: LEFT_PICKER_HANDOFF_X,
+      rotateY: 90,
+      ease: "power1.in",
+      duration: DUR_FLIP * 0.5
+    }, S_FLIP_START);
+    tl.to(leftPickerRef.current, {
+      rotateY: 0,
+      scaleX: -1,
+      ease: "power1.out",
+      duration: DUR_FLIP * 0.5
+    }, S_FLIP_START + DUR_FLIP * 0.5);
+
+    // ==========================================
+    // PHASE 4: DRIVE OFF RIGHT + CAMERA
+    // ==========================================
+    const S_DRIVE_OFF = S_FLIP_START + DUR_FLIP + W * 0.15;
+    const DUR_DRIVE_OFF = W * 1.6;
+    const MOVE_DELTA = W * 2.0;
+    const LEFT_PICKER_EXIT_X = LEFT_PICKER_CATCH_X + MOVE_DELTA;
+    const WOOD_EXIT_X = WOOD_SLIDE_X + W * 0.05 + MOVE_DELTA;
+
+    tl.to(leftPickerRef.current, {
+      x: LEFT_PICKER_EXIT_X,
       ease: "power1.inOut",
-      duration: DUR_MOVE_RIGHT
-    }, S_MOVE_RIGHT);
+      duration: DUR_DRIVE_OFF
+    }, S_DRIVE_OFF);
 
-    leftWheels.forEach((wheel) => {
-      const moveDistance = LEFT_PICKER_HANDOFF_X - LEFT_PICKER_CATCH_X;
-      const angleDelta = (moveDistance / W) * 720;
-
-      tl.fromTo(wheel, { "--wheel-rot": "-720deg" }, {
-        "--wheel-rot": `${-720 + angleDelta}deg`, // spins forward
-        ease: "power1.inOut",
-        duration: DUR_MOVE_RIGHT
-      }, S_MOVE_RIGHT);
-    });
+    // After scaleX:-1 flip, negative CSS rotation = visually clockwise = physically correct
+    const exitRotDelta = (MOVE_DELTA / W) * 720;
+    tl.fromTo(gsap.utils.toArray('.wheel', leftPickerRef.current),
+      { "--wheel-rot": "-720deg" },
+      { "--wheel-rot": `${-720 - exitRotDelta}deg`, ease: "power1.inOut", duration: DUR_DRIVE_OFF },
+      S_DRIVE_OFF
+    );
 
     tl.to(woodRef.current, {
-      x: WOOD_HANDOFF_X,
+      x: WOOD_EXIT_X,
+      y: W * 0.05,
       ease: "power1.inOut",
-      duration: DUR_MOVE_RIGHT
-    }, S_MOVE_RIGHT);
+      duration: DUR_DRIVE_OFF
+    }, S_DRIVE_OFF);
 
-    // 5. Right Picker catches and drives away
-    const DUR_RIGHT_DRIVE = W * 1.0;
-    const S_RIGHT_START = S_MOVE_RIGHT + DUR_MOVE_RIGHT;
+    // Camera follows the picker to the right
+    tl.to(trackRef.current, {
+      x: -scrollDistance,
+      ease: "power1.inOut",
+      duration: DUR_DRIVE_OFF
+    }, S_DRIVE_OFF);
 
-    // Position staticly in the wrapper at S_TRUCK_START so it's waiting natively on camera pan
-    tl.set(rightPickerRef.current, { x: RIGHT_PICKER_STATIC_X }, 0);
-
-    tl.to(rightPickerRef.current, {
-      x: RIGHT_PICKER_STATIC_X + (W * 1.5),
-      ease: "power2.in",
-      duration: DUR_RIGHT_DRIVE
-    }, S_RIGHT_START);
-
-    tl.to(woodRef.current, {
-      x: WOOD_HANDOFF_X + (W * 1.5),
-      ease: "power2.in",
-      duration: DUR_RIGHT_DRIVE
-    }, S_RIGHT_START);
-
-    const rightWheels = rightPickerRef.current.querySelectorAll('.wheel');
-    rightWheels.forEach((wheel) => {
-      tl.fromTo(wheel, { "--wheel-rot": "0deg" }, {
-        "--wheel-rot": "1080deg", // 1.5W distance
-        ease: "power2.in",
-        duration: DUR_RIGHT_DRIVE
-      }, S_RIGHT_START);
-    });
-
-    // Update the ScrollTrigger thoughtfully
+    // Update the ScrollTrigger
     ScrollTrigger.create({
       id: 'mainScroll',
       animation: tl,
@@ -327,16 +312,11 @@ export default function Home() {
             <Wood className="w-full h-auto" />
           </div>
 
-          {/* Left Picker */}
-          {/* Starts effectively identically, GSAP drives its exact real location */}
-          <div ref={leftPickerRef} className="absolute w-[65vw] bottom-0 origin-bottom z-10">
+          {/* Left Picker — perspective enables 3D rotateY flip */}
+          <div ref={leftPickerRef} className="absolute w-[65vw] bottom-0 origin-bottom z-10" style={{ perspective: '800px', perspectiveOrigin: 'center bottom' }}>
             <LeftPicker className="w-full h-auto" />
           </div>
 
-          {/* Right Picker */}
-          <div ref={rightPickerRef} className="absolute w-[65vw] bottom-0 origin-bottom z-10">
-            <RightPicker className="w-full h-auto" />
-          </div>
         </div>
 
       </div>

@@ -6,7 +6,8 @@ export default function Wood(props: React.SVGProps<SVGSVGElement>) {
             <defs>
                 <style dangerouslySetInnerHTML={{ __html: ".wood-cls-1{fill:#bc822b;}" }} />
             </defs>
-            <rect className="wood-cls-1" x="450" y="262.94" width="650" height="76.47" />
+            {/* Single thin plank — sized to ride on the forklift forks */}
+            <rect className="wood-cls-1" x="490" y="318" width="220" height="16" rx="2" />
         </svg>
     );
 }

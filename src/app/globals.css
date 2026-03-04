@@ -48,3 +48,17 @@ body {
   transform-origin: center !important;
   transform: rotate(var(--wheel-rot, 0deg));
 }
+
+@keyframes spin-right {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wheel.spinning {
+  animation: spin-right 0.6s linear infinite;
+}
