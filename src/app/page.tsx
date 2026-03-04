@@ -103,7 +103,7 @@ export default function Home() {
     const W = window.innerWidth;
 
     // Exactly aligns the `.animation_wrapper` block's left edge to the screen's left edge
-    const S_WRAPPER_ALIGNED_LEFT = sketchWidth + W * 0.10;
+    const S_WRAPPER_ALIGNED_LEFT = sketchWidth + W * 0.03;
 
     // Phase 1: Camera pans normally until the wrapper perfectly fills the screen
     tl.to(trackRef.current, {
@@ -120,8 +120,8 @@ export default function Home() {
     // 1. Truck drives in from the right edge of screen and parks HALF-WAY OFF SCREEN
     // User: "camera point on the unloading time should be 30-50% of the back part of the truck"
     const DUR_DRIVE = W * 1.2;
-    const S_TRUCK_START = S_SEQ_START;
-    const TRUCK_STOP_X = -W * 0.40; // 40vw off-screen left. Leaves ~45vw of the truck visible.
+    const S_TRUCK_START = S_SEQ_START - W * 0.5; // start driving during camera pan so truck is visible when separator passes
+    const TRUCK_STOP_X = -W * 0.15; // truck parks with cab just off left screen edge
     const TRUCK_START_X = W * 1.2; // Drives in from +1.2 screens
 
     tl.fromTo(truckRef.current, { x: TRUCK_START_X }, {
@@ -141,7 +141,7 @@ export default function Home() {
     );
 
     // Wood travels with the truck initially (inside truck bed)
-    gsap.set(woodRef.current, { x: TRUCK_START_X, y: 0, rotation: 0 });
+    gsap.set(woodRef.current, { x: TRUCK_START_X, y: -W * 0.03, rotation: 0 });
     tl.to(woodRef.current, {
       x: TRUCK_STOP_X,
       ease: "power2.out",
@@ -299,7 +299,7 @@ export default function Home() {
         {/* Placed absolutely at sketchWidth + 10vw so it NEVER overlaps the sketch, creating a comfortable gap! */}
         <div
           className="absolute z-30 pointer-events-none"
-          style={{ bottom: truckBottom, left: `calc(100vh * ${baseAspect} + 10vw)` }}
+          style={{ bottom: truckBottom, left: `calc(100vh * ${baseAspect} + 3vw)` }}
         >
           {/* Truck */}
           <div ref={truckRef} className="absolute w-[85vw] bottom-0 origin-bottom z-30">
