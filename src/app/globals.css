@@ -46,4 +46,5 @@ body {
 .wheel {
   transform-box: fill-box !important;
   transform-origin: center !important;
+  transform: rotate(var(--wheel-rot, 0deg));
 }

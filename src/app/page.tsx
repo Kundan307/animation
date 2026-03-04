@@ -133,13 +133,13 @@ export default function Home() {
     }, S_TRUCK_START);
 
     const truckWheels = truckRef.current.querySelectorAll('.wheel');
-    if (truckWheels.length > 0) {
-      tl.fromTo(truckWheels, { rotation: 0, transformOrigin: "50% 50%" }, {
-        rotation: -720,
+    truckWheels.forEach((wheel) => {
+      tl.fromTo(wheel, { "--wheel-rot": "0deg" }, {
+        "--wheel-rot": "-1152deg", // 1.6W distance -> 1.6 * 720
         ease: "power2.out",
         duration: DUR_DRIVE
       }, S_TRUCK_START);
-    }
+    });
 
     // Wood sits inside the Truck, travels exactly with it
     tl.fromTo(woodRef.current, { x: TRUCK_START_X }, {
@@ -173,7 +173,7 @@ export default function Home() {
     // 3. Left Picker drives in from right to catch the wood
     const DUR_LEFT_DRIVE = W * 0.8;
     const S_LEFT_START = S_UNLOAD_START + DUR_UNLOAD * 0.5;
-    const LEFT_PICKER_CATCH_X = WOOD_SLIDE_X + W * 0.26; // Aligns fork to wood
+    const LEFT_PICKER_CATCH_X = WOOD_SLIDE_X + W * 0.35; // Increased gap to prevent overlap with truck back
     const LEFT_PICKER_START_X = LEFT_PICKER_CATCH_X + W * 1.0;
 
     tl.fromTo(leftPickerRef.current, { x: LEFT_PICKER_START_X }, {
@@ -183,13 +183,13 @@ export default function Home() {
     }, S_LEFT_START);
 
     const leftWheels = leftPickerRef.current.querySelectorAll('.wheel');
-    if (leftWheels.length > 0) {
-      tl.fromTo(leftWheels, { rotation: 0, transformOrigin: "50% 50%" }, {
-        rotation: -720,
+    leftWheels.forEach((wheel) => {
+      tl.fromTo(wheel, { "--wheel-rot": "0deg" }, {
+        "--wheel-rot": "-720deg", // 1.0W distance
         ease: "power2.out",
         duration: DUR_LEFT_DRIVE
       }, S_LEFT_START);
-    }
+    });
 
     // ==========================================
     // PHASE 3: RESUME PANNING
@@ -217,20 +217,22 @@ export default function Home() {
       duration: DUR_MOVE_RIGHT
     }, S_MOVE_RIGHT);
 
+    leftWheels.forEach((wheel) => {
+      const moveDistance = LEFT_PICKER_HANDOFF_X - LEFT_PICKER_CATCH_X;
+      const angleDelta = (moveDistance / W) * 720;
+
+      tl.fromTo(wheel, { "--wheel-rot": "-720deg" }, {
+        "--wheel-rot": `${-720 + angleDelta}deg`, // spins forward
+        ease: "power1.inOut",
+        duration: DUR_MOVE_RIGHT
+      }, S_MOVE_RIGHT);
+    });
+
     tl.to(woodRef.current, {
       x: WOOD_HANDOFF_X,
       ease: "power1.inOut",
       duration: DUR_MOVE_RIGHT
     }, S_MOVE_RIGHT);
-
-    if (leftWheels.length > 0) {
-      tl.to(leftWheels, {
-        rotation: "+=360",
-        transformOrigin: "50% 50%",
-        ease: "none",
-        duration: DUR_MOVE_RIGHT
-      }, S_MOVE_RIGHT);
-    }
 
     // 5. Right Picker catches and drives away
     const DUR_RIGHT_DRIVE = W * 1.0;
@@ -239,21 +241,26 @@ export default function Home() {
     // Position staticly in the wrapper at S_TRUCK_START so it's waiting natively on camera pan
     tl.set(rightPickerRef.current, { x: RIGHT_PICKER_STATIC_X }, 0);
 
-    const rightWheels = rightPickerRef.current.querySelectorAll('.wheel');
-    if (rightWheels.length > 0) {
-      tl.to(rightWheels, {
-        rotation: "+=360",
-        transformOrigin: "50% 50%",
-        ease: "power2.in",
-        duration: DUR_RIGHT_DRIVE
-      }, S_RIGHT_START);
-    }
-
-    tl.to([rightPickerRef.current, woodRef.current], {
-      x: "+=" + (W * 1.0),
+    tl.to(rightPickerRef.current, {
+      x: RIGHT_PICKER_STATIC_X + (W * 1.5),
       ease: "power2.in",
       duration: DUR_RIGHT_DRIVE
     }, S_RIGHT_START);
+
+    tl.to(woodRef.current, {
+      x: WOOD_HANDOFF_X + (W * 1.5),
+      ease: "power2.in",
+      duration: DUR_RIGHT_DRIVE
+    }, S_RIGHT_START);
+
+    const rightWheels = rightPickerRef.current.querySelectorAll('.wheel');
+    rightWheels.forEach((wheel) => {
+      tl.fromTo(wheel, { "--wheel-rot": "0deg" }, {
+        "--wheel-rot": "1080deg", // 1.5W distance
+        ease: "power2.in",
+        duration: DUR_RIGHT_DRIVE
+      }, S_RIGHT_START);
+    });
 
     // Update the ScrollTrigger thoughtfully
     ScrollTrigger.create({
@@ -262,7 +269,7 @@ export default function Home() {
       trigger: containerRef.current,
       pin: true,
       scrub: 1,
-      end: () => `+=${scrollDistance + (S_SEQ_END - S_SEQ_START)}`,
+      end: () => `+=${tl.duration()}`,
       invalidateOnRefresh: true,
     });
 

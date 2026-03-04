@@ -7,8 +7,8 @@ export default function Truck(props: React.SVGProps<SVGSVGElement>) {
                 <style dangerouslySetInnerHTML={{ __html: ".truck-cls-1,.truck-cls-2,.truck-cls-4{fill:#e3d9cd;}.truck-cls-1,.truck-cls-4{stroke:#623111;stroke-miterlimit:10;}.truck-cls-1{stroke-width:3px;}.truck-cls-3{fill:#623111;}.truck-cls-4{stroke-width:6px;}" }} />
             </defs>
 
-            {/* Front Wheel */}
-            <g className="wheel wheel-front">
+            {/* Front Wheel: Center is ~ 142.67, 485 */}
+            <g className="wheel wheel-front" data-svg-origin="142.67 485">
                 <path className="truck-cls-1" d="M142.67,533.42a60.79,60.79,0,1,0-48.54-71A60.86,60.86,0,0,0,142.67,533.42Zm16-85.29a26,26,0,1,1-30.35,20.72A26,26,0,0,1,158.64,448.13Z" />
                 <path className="truck-cls-1" d="M151.63,485.48A4.41,4.41,0,1,1,146.5,489,4.41,4.41,0,0,1,151.63,485.48Z" />
                 <path className="truck-cls-1" d="M157.68,453.18a4.41,4.41,0,1,1-5.14,3.53A4.42,4.42,0,0,1,157.68,453.18Z" />
@@ -21,8 +21,8 @@ export default function Truck(props: React.SVGProps<SVGSVGElement>) {
             <path className="truck-cls-2" d="M180.91,517.5s37.28-21.7,16.34-69.7" />
             <path className="truck-cls-3" d="M180.91,517.5a47.31,47.31,0,0,0,7.46-6.3,51.13,51.13,0,0,0,6.16-7.53,48.67,48.67,0,0,0,7.55-17.75,54.12,54.12,0,0,0,.41-19.33,82.57,82.57,0,0,0-5.24-18.79q1,2.24,2,4.5c.55,1.54,1.16,3.06,1.68,4.62a69.33,69.33,0,0,1,2.35,9.55,53,53,0,0,1-.19,19.65,49,49,0,0,1-22.15,31.38Z" />
 
-            {/* Rear Left Wheel */}
-            <g className="wheel wheel-rear-left">
+            {/* Rear Left Wheel: Center is ~ 827, 485 */}
+            <g className="wheel wheel-rear-left" data-svg-origin="827 485">
                 <path className="truck-cls-1" d="M883.52,484.88a60.79,60.79,0,1,0-71,48.55A60.86,60.86,0,0,0,883.52,484.88Zm-85.29-16A26,26,0,1,1,819,499.27,26,26,0,0,1,798.23,468.92Z" />
                 <path className="truck-cls-1" d="M835.58,475.93a4.41,4.41,0,1,1,3.52,5.13A4.41,4.41,0,0,1,835.58,475.93Z" />
                 <path className="truck-cls-1" d="M803.28,469.88a4.41,4.41,0,1,1,3.53,5.14A4.42,4.42,0,0,1,803.28,469.88Z" />
@@ -50,8 +50,8 @@ export default function Truck(props: React.SVGProps<SVGSVGElement>) {
             <path className="truck-cls-2" d="M867.61,446.65s-21.71-37.28-69.71-16.34" />
             <path className="truck-cls-3" d="M867.6,446.65a47.31,47.31,0,0,0-6.3-7.46,51.57,51.57,0,0,0-7.52-6.16A48.72,48.72,0,0,0,836,425.48a53.88,53.88,0,0,0-19.33-.41,82.57,82.57,0,0,0-18.79,5.24c1.5-.67,3-1.33,4.5-2s3.06-1.16,4.62-1.68a69.33,69.33,0,0,1,9.55-2.35,53,53,0,0,1,19.65.19,49,49,0,0,1,31.38,22.15Z" />
 
-            {/* Rear Right Wheel */}
-            <g className="wheel wheel-rear-right">
+            {/* Rear Right Wheel: Center is ~ 964.55, 485 */}
+            <g className="wheel wheel-rear-right" data-svg-origin="964.55 485">
                 <path className="truck-cls-1" d="M964.55,533.42a60.79,60.79,0,1,0-48.55-71A60.85,60.85,0,0,0,964.55,533.42Zm16-85.29a26,26,0,1,1-30.34,20.72A26,26,0,0,1,980.51,448.13Z" />
                 <path className="truck-cls-1" d="M973.5,485.48a4.4,4.4,0,1,1-5.13,3.52A4.41,4.41,0,0,1,973.5,485.48Z" />
                 <path className="truck-cls-1" d="M979.55,453.18a4.41,4.41,0,1,1-5.14,3.53A4.42,4.42,0,0,1,979.55,453.18Z" />
