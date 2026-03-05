@@ -99,7 +99,8 @@ export default function Home() {
     const pickerLiftY = -(truckEmptyBelowScreen - pickerEmptyBelowScreen);
 
     // Initial setup
-    gsap.set([truckRef.current, woodRef.current, leftPickerRef.current], { autoAlpha: 1 });
+    gsap.set([truckRef.current, leftPickerRef.current], { autoAlpha: 1 });
+    gsap.set(woodRef.current, { autoAlpha: 0 }); // guarantee wood is initially invisible before timeline takes over
     gsap.set(leftPickerRef.current, { y: pickerLiftY });
 
     const tl = gsap.timeline();
@@ -189,24 +190,29 @@ export default function Home() {
     // ==========================================
     // Wood appears on fork top (no truck slide, smooth fade-in)
     // ==========================================
-    gsap.set(woodRef.current, { autoAlpha: 0 });
+
+    // Explicitly hide wood and set its position at the very beginning of the timeline 
+    // so scrolling backwards perfectly restores this invisible state.
+    tl.set(woodRef.current, {
+      autoAlpha: 0,
+      x: LEFT_PICKER_CATCH_X + FORK_OFFSET_X,
+      y: FORK_ALIGN_Y,
+      rotation: 0
+    }, 0);
 
     const S_WOOD_APPEAR = S_LEFT_START + DUR_LEFT_DRIVE;
     const DUR_WOOD_FADE = W * 0.2;
 
     // Fade wood in on the fork position
-    tl.to(woodRef.current, {
-      autoAlpha: 1,
-      ease: "power1.in",
-      duration: DUR_WOOD_FADE
-    }, S_WOOD_APPEAR);
-
-    // Position wood on forks immediately when it starts appearing
-    tl.set(woodRef.current, {
-      x: LEFT_PICKER_CATCH_X + FORK_OFFSET_X,
-      y: FORK_ALIGN_Y,
-      rotation: 0
-    }, S_WOOD_APPEAR);
+    tl.fromTo(woodRef.current,
+      { autoAlpha: 0 },
+      {
+        autoAlpha: 1,
+        ease: "power1.in",
+        duration: DUR_WOOD_FADE
+      },
+      S_WOOD_APPEAR
+    );
 
     const S_WOOD_DONE = S_WOOD_APPEAR + DUR_WOOD_FADE;
 
