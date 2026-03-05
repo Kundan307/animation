@@ -289,41 +289,14 @@ export default function Home() {
       duration: DUR_WALKING
     }, S_WALKING_START);
 
-    // Animate cart moving slightly faster than camera so it walks across screen
+    // Animate cart moving across the screen as the camera pans. 
+    // Wood is a DOM child so it moves natively with the cart!
     if (walkingCartRef.current) {
       tl.to(walkingCartRef.current, {
-        x: W * 0.8, // Moves right relative to its container
+        x: W * 3.0, // Camera pans left W*2.5, cart moves right W*3.0. Net: Cart visibly moves W*0.5 across the screen forward!
         ease: "none",
         duration: DUR_WALKING
       }, S_WALKING_START);
-
-      // User requested 3 steps "left right left" during the scroll, no "shaking" screen.
-      // We set transform origin around hip joint for legs (based on SVG viewBox coordinates)
-      gsap.set(['.leg-front', '.leg-back'], { transformOrigin: "595px 436px" });
-
-      const legDuration = DUR_WALKING / 3;
-
-      // Leg 1 (Front leg): Right-Left-Right
-      tl.to('.leg-front', {
-        rotation: 15, ease: "power1.inOut", duration: legDuration
-      }, S_WALKING_START)
-        .to('.leg-front', {
-          rotation: -15, ease: "power1.inOut", duration: legDuration
-        }, S_WALKING_START + legDuration)
-        .to('.leg-front', {
-          rotation: 0, ease: "power1.inOut", duration: legDuration
-        }, S_WALKING_START + legDuration * 2);
-
-      // Leg 2 (Back leg): Left-Right-Left (Offset pendulum)
-      tl.to('.leg-back', {
-        rotation: -15, ease: "power1.inOut", duration: legDuration
-      }, S_WALKING_START)
-        .to('.leg-back', {
-          rotation: 15, ease: "power1.inOut", duration: legDuration
-        }, S_WALKING_START + legDuration)
-        .to('.leg-back', {
-          rotation: 0, ease: "power1.inOut", duration: legDuration
-        }, S_WALKING_START + legDuration * 2);
     }
 
     // Lock wood to forks for previous phases
@@ -448,7 +421,7 @@ export default function Home() {
               className="absolute z-10 w-[85vw]"
               style={{
                 bottom: '-17.3vw', // Mathematically aligned to the 564px fork line from 1161 viewBox
-                left: '12vw',  // Mathematically set to perfectly align front tip of wood with front tip of rightmost forks
+                left: '4vw',  // Shifted left per user request to overhang backward slightly
                 transformOrigin: "center center",
                 transform: 'rotate(0deg)', // Ensure it is perfectly horizontal
               }}
