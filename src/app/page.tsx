@@ -9,6 +9,7 @@ import { useGSAP } from "@gsap/react";
 import Truck from "@/components/Truck";
 import Wood from "@/components/Wood";
 import LeftPicker from "@/components/LeftPicker";
+import { WalkingCart } from "@/components/WalkingCart";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -18,6 +19,9 @@ export default function Home() {
   const truckRef = useRef<HTMLDivElement>(null);
   const woodRef = useRef<HTMLDivElement>(null);
   const leftPickerRef = useRef<HTMLDivElement>(null);
+  const gluingTextRef = useRef<HTMLDivElement>(null);
+  const walkingCartRef = useRef<HTMLDivElement>(null);
+  const walkingWoodRef = useRef<HTMLDivElement>(null);
 
   // final-sketch.svg natural dimensions: viewBox="0 0 2240.09 601.49"
   const baseAspect = 2240.09 / 601.49;
@@ -80,8 +84,9 @@ export default function Home() {
   useGSAP(() => {
     if (!trackRef.current || !containerRef.current || !truckRef.current || !woodRef.current || !leftPickerRef.current) return;
 
+    // Calculate full scroll distance based on all track sections
     const trackWidth = trackRef.current.scrollWidth;
-    const scrollDistance = trackWidth - window.innerWidth;
+    const scrollDistance = Math.max(0, trackWidth - window.innerWidth);
 
     // The sketch width in pixels = viewport height * aspect ratio
     const sketchWidth = window.innerHeight * baseAspect;
@@ -103,7 +108,7 @@ export default function Home() {
     const W = window.innerWidth;
 
     // Exactly aligns the `.animation_wrapper` block's left edge to the screen's left edge
-    const S_WRAPPER_ALIGNED_LEFT = sketchWidth + W * 0.03;
+    const S_WRAPPER_ALIGNED_LEFT = sketchWidth + W * 0.15;
 
     // Phase 1: Camera pans normally until the wrapper perfectly fills the screen
     tl.to(trackRef.current, {
@@ -117,12 +122,11 @@ export default function Home() {
     // ==========================================
     const S_SEQ_START = S_WRAPPER_ALIGNED_LEFT;
 
-    // 1. Truck drives in from the right edge of screen and parks HALF-WAY OFF SCREEN
-    // User: "camera point on the unloading time should be 30-50% of the back part of the truck"
+    // 1. Truck drives in — parks so only ~50% of screen is truck
     const DUR_DRIVE = W * 1.2;
-    const S_TRUCK_START = S_SEQ_START - W * 0.5; // start driving during camera pan so truck is visible when separator passes
-    const TRUCK_STOP_X = -W * 0.15; // truck parks with cab just off left screen edge
-    const TRUCK_START_X = W * 1.2; // Drives in from +1.2 screens
+    const S_TRUCK_START = S_SEQ_START - W * 0.5;
+    const TRUCK_STOP_X = -W * 0.35; // 50vw of 85vw truck visible = ~right half
+    const TRUCK_START_X = W * 1.2;
 
     tl.fromTo(truckRef.current, { x: TRUCK_START_X }, {
       x: TRUCK_STOP_X,
@@ -132,53 +136,43 @@ export default function Home() {
 
     tl.fromTo(gsap.utils.toArray('.wheel', truckRef.current),
       { "--wheel-rot": "0deg" },
-      {
-        "--wheel-rot": "-1152deg", // 1.6W distance -> 1.6 * 720
-        ease: "power2.out",
-        duration: DUR_DRIVE
-      },
+      { "--wheel-rot": "-1152deg", ease: "power2.out", duration: DUR_DRIVE },
       S_TRUCK_START
     );
 
-    // Wood travels with the truck initially (inside truck bed)
-    gsap.set(woodRef.current, { x: TRUCK_START_X, y: -W * 0.03, rotation: 0 });
-    tl.to(woodRef.current, {
-      x: TRUCK_STOP_X,
-      ease: "power2.out",
-      duration: DUR_DRIVE
-    }, S_TRUCK_START);
+    // ==========================================
+    // SVG MEASUREMENTS
+    // ==========================================
+    const truckDivW = 0.85 * W;
+    const pickerDivW = 0.65 * W;
+    const woodDivW = 0.85 * W;
+
+    const tailgatePx = (1116.8 / 1161.62) * truckDivW;
+    const forkTipPx = (163 / 1161.62) * pickerDivW;
+    const truckTailgateWorld = TRUCK_STOP_X + tailgatePx;
 
     // ==========================================
-    // PHASE 2: WOOD UNLOAD
+    // FORK MATH — compute offsets before using them
     // ==========================================
-    const DUR_UNLOAD = W * 0.7;
-    const S_UNLOAD_START = S_TRUCK_START + DUR_DRIVE + W * 0.2;
-    const WOOD_SLIDE_X = TRUCK_STOP_X + W * 0.28;
+    const plankPx = (490 / 1161.62) * woodDivW;
+    const pickerDivH = pickerDivW * (601.49 / 1161.62);
+    const woodDivH = woodDivW * (601.49 / 1161.62);
+    const forkFromBottom = pickerDivH * (1 - 323 / 601.49) + Math.abs(pickerLiftY);
+    const plankFromBottom = woodDivH * (1 - 318 / 601.49);
+    const FORK_ALIGN_Y = -(forkFromBottom - plankFromBottom) - W * 0.03;
 
-    // Phase 2a: wood slides diagonally out of truck bed at -14°
-    tl.to(woodRef.current, {
-      x: WOOD_SLIDE_X,
-      rotation: -14,
-      transformOrigin: "left center",
-      ease: "power1.inOut",
-      duration: DUR_UNLOAD * 0.55
-    }, S_UNLOAD_START);
-
-    // Phase 2b: wood levels out and drops slightly
-    tl.to(woodRef.current, {
-      rotation: 0,
-      y: W * 0.05,
-      ease: "power2.out",
-      duration: DUR_UNLOAD * 0.45
-    }, S_UNLOAD_START + DUR_UNLOAD * 0.55);
+    const FORK_OFFSET_X = forkTipPx - plankPx - W * 0.08;  // wood shifted towards truck, half on forks
+    const FORK_OFFSET_X_FLIPPED = (pickerDivW - forkTipPx) - plankPx - W * 0.04; // closer to lifter body
 
     // ==========================================
-    // Left Picker drives in
+    // Lifter drives in — stops with clear gap from truck
     // ==========================================
     const DUR_LEFT_DRIVE = W * 0.85;
-    const S_LEFT_START = S_UNLOAD_START + DUR_UNLOAD * 0.3;
-    const LEFT_PICKER_CATCH_X = WOOD_SLIDE_X + W * 0.55; // good gap from truck
-    const LEFT_PICKER_START_X = LEFT_PICKER_CATCH_X + W * 1.2;
+    const S_LEFT_START = S_TRUCK_START + DUR_DRIVE + W * 0.1;
+
+    // More space between truck and lifter
+    const LEFT_PICKER_CATCH_X = truckTailgateWorld - forkTipPx + W * 0.10;
+    const LEFT_PICKER_START_X = truckTailgateWorld + W * 0.8;
 
     tl.fromTo(leftPickerRef.current, { x: LEFT_PICKER_START_X }, {
       x: LEFT_PICKER_CATCH_X,
@@ -193,9 +187,33 @@ export default function Home() {
     );
 
     // ==========================================
+    // Wood appears on fork top (no truck slide, smooth fade-in)
+    // ==========================================
+    gsap.set(woodRef.current, { autoAlpha: 0 });
+
+    const S_WOOD_APPEAR = S_LEFT_START + DUR_LEFT_DRIVE;
+    const DUR_WOOD_FADE = W * 0.2;
+
+    // Fade wood in on the fork position
+    tl.to(woodRef.current, {
+      autoAlpha: 1,
+      ease: "power1.in",
+      duration: DUR_WOOD_FADE
+    }, S_WOOD_APPEAR);
+
+    // Position wood on forks immediately when it starts appearing
+    tl.set(woodRef.current, {
+      x: LEFT_PICKER_CATCH_X + FORK_OFFSET_X,
+      y: FORK_ALIGN_Y,
+      rotation: 0
+    }, S_WOOD_APPEAR);
+
+    const S_WOOD_DONE = S_WOOD_APPEAR + DUR_WOOD_FADE;
+
+    // ==========================================
     // PHASE 3: 3D FLIP (picker turns to face right)
     // ==========================================
-    const S_FLIP_START = S_LEFT_START + DUR_LEFT_DRIVE + W * 0.1;
+    const S_FLIP_START = S_WOOD_DONE + W * 0.1;
     const DUR_FLIP = W * 0.35;
 
     tl.to(leftPickerRef.current, {
@@ -215,9 +233,8 @@ export default function Home() {
     // ==========================================
     const S_DRIVE_OFF = S_FLIP_START + DUR_FLIP + W * 0.15;
     const DUR_DRIVE_OFF = W * 1.6;
-    const MOVE_DELTA = W * 2.0;
+    const MOVE_DELTA = W * 1.0; // Reduced so camera outpaces it significantly
     const LEFT_PICKER_EXIT_X = LEFT_PICKER_CATCH_X + MOVE_DELTA;
-    const WOOD_EXIT_X = WOOD_SLIDE_X + W * 0.05 + MOVE_DELTA;
 
     tl.to(leftPickerRef.current, {
       x: LEFT_PICKER_EXIT_X,
@@ -225,7 +242,6 @@ export default function Home() {
       duration: DUR_DRIVE_OFF
     }, S_DRIVE_OFF);
 
-    // After scaleX:-1 flip, negative CSS rotation = visually clockwise = physically correct
     const exitRotDelta = (MOVE_DELTA / W) * 720;
     tl.fromTo(gsap.utils.toArray('.wheel', leftPickerRef.current),
       { "--wheel-rot": "-720deg" },
@@ -233,29 +249,104 @@ export default function Home() {
       S_DRIVE_OFF
     );
 
-    tl.to(woodRef.current, {
-      x: WOOD_EXIT_X,
-      y: W * 0.05,
-      ease: "power1.inOut",
-      duration: DUR_DRIVE_OFF
-    }, S_DRIVE_OFF);
-
-    // Camera follows the picker to the right
+    // Camera goes far enough to show the next section fully
+    const CAMERA_PHASE_4 = W * 1.5; // distance camera moves during drive-off
     tl.to(trackRef.current, {
-      x: -scrollDistance,
+      x: `-=${CAMERA_PHASE_4}`,
       ease: "power1.inOut",
       duration: DUR_DRIVE_OFF
     }, S_DRIVE_OFF);
 
-    // Update the ScrollTrigger
+    // ==========================================
+    // PHASE 5: GLUING SECTION PENDING
+    // ==========================================
+    const S_GLUING_START = S_DRIVE_OFF + DUR_DRIVE_OFF;
+    const DUR_GLUING = W * 1.0;
+
+    // Just keep panning the camera through the gluing section
+    tl.to(trackRef.current, {
+      x: `-=${DUR_GLUING}`,
+      ease: "none",
+      duration: DUR_GLUING
+    }, S_GLUING_START);
+
+    // ==========================================
+    // PHASE 6: WALKING CART 
+    // ==========================================
+    const S_WALKING_START = S_GLUING_START + DUR_GLUING;
+    const DUR_WALKING = W * 2.5;
+
+    // Pan camera into walking section
+    tl.to(trackRef.current, {
+      x: `-=${DUR_WALKING}`,
+      ease: "none",
+      duration: DUR_WALKING
+    }, S_WALKING_START);
+
+    // Animate cart moving slightly faster than camera so it walks across screen
+    if (walkingCartRef.current) {
+      tl.to(walkingCartRef.current, {
+        x: W * 0.8, // Moves right relative to its container
+        ease: "none",
+        duration: DUR_WALKING
+      }, S_WALKING_START);
+
+      // User requested 3 steps "left right left" during the scroll, no "shaking" screen.
+      // We set transform origin around hip joint for legs (based on SVG viewBox coordinates)
+      gsap.set(['.leg-front', '.leg-back'], { transformOrigin: "595px 436px" });
+
+      const legDuration = DUR_WALKING / 3;
+
+      // Leg 1 (Front leg): Right-Left-Right
+      tl.to('.leg-front', {
+        rotation: 15, ease: "power1.inOut", duration: legDuration
+      }, S_WALKING_START)
+        .to('.leg-front', {
+          rotation: -15, ease: "power1.inOut", duration: legDuration
+        }, S_WALKING_START + legDuration)
+        .to('.leg-front', {
+          rotation: 0, ease: "power1.inOut", duration: legDuration
+        }, S_WALKING_START + legDuration * 2);
+
+      // Leg 2 (Back leg): Left-Right-Left (Offset pendulum)
+      tl.to('.leg-back', {
+        rotation: -15, ease: "power1.inOut", duration: legDuration
+      }, S_WALKING_START)
+        .to('.leg-back', {
+          rotation: 15, ease: "power1.inOut", duration: legDuration
+        }, S_WALKING_START + legDuration)
+        .to('.leg-back', {
+          rotation: 0, ease: "power1.inOut", duration: legDuration
+        }, S_WALKING_START + legDuration * 2);
+    }
+
+    // Lock wood to forks for previous phases
+    const tlDur = tl.duration();
+    const woodSlideProgress = S_WOOD_APPEAR / tlDur;
+    const flipDoneProgress = (S_FLIP_START + DUR_FLIP) / tlDur;
+
     ScrollTrigger.create({
       id: 'mainScroll',
       animation: tl,
       trigger: containerRef.current,
       pin: true,
       scrub: 1,
-      end: () => `+=${tl.duration()}`,
+      end: () => `+=${Math.max(window.innerWidth, tl.duration())}`, // ensure enough scroll space
       invalidateOnRefresh: true,
+      onUpdate: (self) => {
+        // Once wood appears, lock it to picker forks every frame
+        if (self.progress >= woodSlideProgress && leftPickerRef.current && woodRef.current) {
+          const px = gsap.getProperty(leftPickerRef.current, "x") as number;
+          // Use correct offset based on whether picker has flipped
+          const offset = self.progress >= flipDoneProgress ? FORK_OFFSET_X_FLIPPED : FORK_OFFSET_X;
+          gsap.set(woodRef.current, {
+            x: px + offset,
+            y: FORK_ALIGN_Y,
+            rotation: 0,
+            autoAlpha: 1
+          });
+        }
+      }
     });
 
   }, { scope: containerRef });
@@ -290,16 +381,18 @@ export default function Home() {
         </div>
 
         {/* Component 3: Extended Road (long enough for scrolling + future content) */}
-        <div className="relative h-full w-[300vw] flex-shrink-0 z-10" style={{ transform: "translateX(-4px)" }}>
-          <div className="absolute w-full bg-[#623111]" style={{ bottom: beigeHeight, height: horizontalLineHeight }} />
-          <div className="absolute w-full bottom-0 bg-[#e4dace]" style={{ height: beigeHeight }} />
+        {/* Adjusted width to 600vw to ensure it clearly covers everything behind the cart during the full scroll */}
+        <div className="relative h-full w-[600vw] flex-shrink-0 z-10" style={{ transform: "translateX(-4px)" }}>
+          <div className="absolute top-0 bg-[#e4dace] h-full" style={{ width: '600vw' }} />
+          <div className="absolute bg-[#623111]" style={{ bottom: beigeHeight, height: horizontalLineHeight, width: '600vw' }} />
+          <div className="absolute bottom-0 bg-[#e4dace]" style={{ height: beigeHeight, width: '600vw' }} />
         </div>
 
         {/* Component 4: The Animated Elements (Truck, Wood, Pickers) */}
         {/* Placed absolutely at sketchWidth + 10vw so it NEVER overlaps the sketch, creating a comfortable gap! */}
         <div
           className="absolute z-30 pointer-events-none"
-          style={{ bottom: truckBottom, left: `calc(100vh * ${baseAspect} + 3vw)` }}
+          style={{ bottom: truckBottom, left: `calc(100vh * ${baseAspect} + 15vw)`, width: '300vw', height: '100vh', overflow: 'hidden' }}
         >
           {/* Truck */}
           <div ref={truckRef} className="absolute w-[85vw] bottom-0 origin-bottom z-30">
@@ -316,7 +409,46 @@ export default function Home() {
           <div ref={leftPickerRef} className="absolute w-[65vw] bottom-0 origin-bottom z-10" style={{ perspective: '800px', perspectiveOrigin: 'center bottom' }}>
             <LeftPicker className="w-full h-auto" />
           </div>
+        </div>
 
+        {/* Component 5: Gluing Section Placeholder */}
+        <div
+          className="absolute h-full flex flex-col justify-center items-center z-20 border-l-2 border-r-2 border-dashed border-[#623111]/30"
+          style={{ left: `calc(100vh * ${baseAspect} + 130vw)`, width: '100vw' }}
+        >
+          <div ref={gluingTextRef} className="text-[#623111] text-4xl font-bold opacity-50 tracking-widest uppercase">
+            GLUING ASSETS PENDING
+          </div>
+        </div>
+
+        {/* Component 6: Walking Cart Section */}
+        <div
+          className="absolute h-full z-20 pointer-events-none"
+          style={{ left: `calc(100vh * ${baseAspect} + 230vw)`, width: '150vw' }}
+        >
+          <div
+            className="absolute z-30 flex items-end pointer-events-none"
+            style={{ bottom: truckBottom, left: '10vw' }}
+            ref={walkingCartRef}
+          >
+            <div className="relative w-[45vw] origin-bottom">
+              {/* Using the LeftPicker/Cart svg component here or actual item */}
+              <WalkingCart id="walking-cart-svg" className="w-full h-auto relative z-20" />
+            </div>
+
+            {/* The wood resting on the cart - precisely sized at 85vw matching offloading exactly */}
+            {/* The cart itself is 45vw. Re-calculate the offset to place it perfectly on top. */}
+            <div
+              ref={walkingWoodRef}
+              className="absolute z-10 w-[85vw] origin-bottom-left"
+              style={{
+                bottom: '18vw', // Adjusted Math to align exactly with enlarged cart top
+                left: '-20vw',  // Center the 85vw wood on the 45vw cart
+              }}
+            >
+              <Wood className="w-full h-auto" />
+            </div>
+          </div>
         </div>
 
       </div>
