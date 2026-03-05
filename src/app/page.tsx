@@ -381,11 +381,11 @@ export default function Home() {
         </div>
 
         {/* Component 3: Extended Road (long enough for scrolling + future content) */}
-        {/* Adjusted width to 600vw to ensure it clearly covers everything behind the cart during the full scroll */}
-        <div className="relative h-full w-[600vw] flex-shrink-0 z-10" style={{ transform: "translateX(-4px)" }}>
-          <div className="absolute top-0 bg-[#e4dace] h-full" style={{ width: '600vw' }} />
-          <div className="absolute bg-[#623111]" style={{ bottom: beigeHeight, height: horizontalLineHeight, width: '600vw' }} />
-          <div className="absolute bottom-0 bg-[#e4dace]" style={{ height: beigeHeight, width: '600vw' }} />
+        {/* Adjusted width to 800vw to ensure it clearly covers everything behind the cart during the full scroll */}
+        <div className="relative h-full w-[800vw] flex-shrink-0 z-10" style={{ transform: "translateX(-4px)" }}>
+          <div className="absolute top-0 bg-[#e4dace] h-full" style={{ width: '800vw' }} />
+          <div className="absolute bg-[#623111]" style={{ bottom: beigeHeight, height: horizontalLineHeight, width: '800vw' }} />
+          <div className="absolute bottom-0 bg-[#e4dace]" style={{ height: beigeHeight, width: '800vw' }} />
         </div>
 
         {/* Component 4: The Animated Elements (Truck, Wood, Pickers) */}
@@ -428,22 +428,23 @@ export default function Home() {
         >
           <div
             className="absolute z-30 flex items-end pointer-events-none"
-            style={{ bottom: truckBottom, left: '10vw' }}
+            style={{ bottom: `calc(${truckBottom} + 3.5vw)`, left: '10vw' }}
             ref={walkingCartRef}
           >
-            <div className="relative w-[45vw] origin-bottom">
+            <div className="relative w-[70vw] origin-bottom">
               {/* Using the LeftPicker/Cart svg component here or actual item */}
               <WalkingCart id="walking-cart-svg" className="w-full h-auto relative z-20" />
             </div>
 
-            {/* The wood resting on the cart - precisely sized at 85vw matching offloading exactly */}
-            {/* The cart itself is 45vw. Re-calculate the offset to place it perfectly on top. */}
+            {/* The wood resting perfectly flat inside the cart in front of the person */}
             <div
               ref={walkingWoodRef}
-              className="absolute z-10 w-[85vw] origin-bottom-left"
+              className="absolute z-10 w-[60vw]"
               style={{
-                bottom: '18vw', // Adjusted Math to align exactly with enlarged cart top
-                left: '-20vw',  // Center the 85vw wood on the 45vw cart
+                bottom: '6vw', // Drop low to gently sit on forks
+                left: '2vw',  // Nudge exactly in front of the guy
+                transformOrigin: "center center",
+                transform: 'rotate(0deg)', // Ensure it is perfectly horizontal
               }}
             >
               <Wood className="w-full h-auto" />
