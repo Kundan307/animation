@@ -445,10 +445,10 @@ export default function Home() {
             {/* The wood resting perfectly flat inside the cart in front of the person */}
             <div
               ref={walkingWoodRef}
-              className="absolute z-10 w-[60vw]"
+              className="absolute z-10 w-[85vw]"
               style={{
-                bottom: '6vw', // Drop low to gently sit on forks
-                left: '2vw',  // Nudge exactly in front of the guy
+                bottom: '-17.3vw', // Mathematically aligned to the 564px fork line from 1161 viewBox
+                left: '12vw',  // Mathematically set to perfectly align front tip of wood with front tip of rightmost forks
                 transformOrigin: "center center",
                 transform: 'rotate(0deg)', // Ensure it is perfectly horizontal
               }}
